@@ -3,14 +3,10 @@
 
 # define rooms and items
 
-#todo edited by Tay:
-#todo defining the questions and answers as dictionaries. Ive created a dictionary named questions_dict so we can apply a random function. 
-
 questions_dict = {
-
     "question_1": {
         "question": "Who is the tallest person in our class?",
-        "answer": "luis", #changed Luís for Luis
+        "answer": "luis", 
         "type": "question"
     },
 
@@ -31,11 +27,7 @@ questions_dict = {
         "answer": "tay",
         "type": "question"
     },
-
 }
-#todo creating the randomness of the questions
-import random 
-
 # FURNITURE
 
 backpack = {
@@ -117,9 +109,10 @@ pill_yellow = {
 }
 
 # SCENARIOS
-# ADD DESCRIPTION TO THE SCENARIOS
+#TODO ADD DESCRIPTION TO THE SCENARIOS
 outside = {
     "name": "outside",
+    "description": " ",
 }
 
 classroom = {
@@ -140,17 +133,16 @@ pet_store = {
     "description": " ",
 }
 
-basketball_court = { #basketball court
+basketball_court = {
     "name":"basketball court",
     "type":"scenario",
     "description": " ",
 }
 
-#todo timer for the game as a watch item
 
 #all_scenarios = [classroom, outside]
 #all_portals = [portal_a]
-
+#! commented from MVP as it was not used
 
 # define which items/rooms are related
 
@@ -158,14 +150,12 @@ basketball_court = { #basketball court
 # if its a furniture, everything inside the furniture
 # if it is a door, the two rooms the door connects. From where to where!
 
-#todo Ive added the questions to the object_relations dictionary so we can access them in the game.
 # CODE FOR RANDOM QUESTIONS -> [ questions_dict[random.choice(list(questions_dict.keys()))]
 
 object_relations = {
-    "computer": [ questions_dict["question_4"], pill_blue,], 
-    "fitting area": [questions_dict["question_2"], pill_red,],
+    "computer": [ questions_dict["question_4"], pill_blue], 
+    "fitting area": [questions_dict["question_2"], pill_red],
     "training pads container": [questions_dict["question_3"],pill_green],
-    #"grooming supplies stand": [questions_dict["question_3"],pill_yellow], 
     "hot dog stand": [questions_dict["question_1"],pill_yellow],
     "classroom": [backpack, computer, portal_blue],
     "shoe store": [portal_blue, portal_red, portal_green, fitting_area],
@@ -175,7 +165,7 @@ object_relations = {
     "blue portal": [classroom, shoe_store],
     "red portal": [shoe_store, pet_store,shoe_store],
     "green portal": [basketball_court, shoe_store],
-    "yellow portal": [basketball_court, outside ]
+    "yellow portal": [basketball_court, outside]
 }
 
 # define game state. Do not directly change this dict. 
@@ -186,13 +176,15 @@ object_relations = {
 INIT_GAME_STATE = {
     "initial_scenario": classroom, # this allows the first game image to be shown when the current_scenario changes
     "current_scenario": None, # this makes sense, the user doesn't start anywhere until a scenario is assigned
-    "pills_collected": [pill_blue, pill_red, pill_green, pill_yellow], #! IMPORTANT. THIS MAKES THE USER STARTS WITH ALL PILLS. CHANGE IN THE FINAL VERSION
+    "pills_collected": [],
     "target_scenario": outside,
 }
 
+INITIAL_TIMER_VALUE = 300 # so 5 minutes
+
 # %%
 # MUSIC
-""" 
+
 #!installation music library
 #%pip install pygame #! Comment if runnin on terminal and .py file
 import pygame
@@ -204,14 +196,14 @@ pygame.mixer.music.load(r"quiz-countdown-194417.mp3")
 # set volume
 pygame.mixer.music.set_volume(0.008)
 # play music (-1 means loop indefinitely)
-pygame.mixer.music.play(-1) """
+pygame.mixer.music.play(-1)
 
-# pygame.mixer.music.stop() #! uncomment and run to stop the music
+
 
 # %%
 # FONT COLOR
 
-# removed function and added variables for simplicity
+# NOTE: replaced function for variables for simplicity of use and to mantain code legibility
 
 red_b = "\033[1;31m" # RED BOLD. for incorrect prompts or actions
 green_b = "\033[1;32m" # GREEN BOLD. for correct prompts or success messages
@@ -239,6 +231,12 @@ import subprocess # to run extra terminal commands
 import shutil  # for checking if imgcat is available
 
 def show_image(img_path):
+    """
+    Starts displays an image either in the terminal or by opening an image preview
+    example use: show_image("test.jpg")
+    IMPORTANT: Only works on terminals (not VS code nested terminal) and by running the .py file
+    in iTerm2 (for mac) it shows the image inside the terminal, in others, it opens an image preview.
+    """
     os_name = platform.system() # get the user OS
 
     if os_name == "Darwin":  # if OS is macOS
@@ -266,38 +264,9 @@ def show_image(img_path):
         except Exception as e:
             print(f"Error opening image: {e}") # error handling
 
-#? HOW TO USE?
-# Invoke function show_image and pass image path.
-# Example => show_image("test.jpg")
-#! IMPORTANT: Only works on terminals (not VS code nested terminal) and by running the .py file
 
 # %%
-import time
-
-def start_timer(total_time):
-    """
-    Start a countdown timer for the given number of seconds.
-    Returns False if time runs out, True otherwise.
-    """
-    print(f"Game Timer Started! You have {total_time} seconds to escape!")
-    
-    start_time = time.time()
-    while True:
-        elapsed_time = time.time() - start_time
-        remaining_time = total_time - int(elapsed_time)
-        
-        if remaining_time <= 0:
-            print("\nTime's up! You didn't escape in time!")
-            return False
-        
-        print(f"Time Remaining: {remaining_time} seconds", end='\r')
-        time.sleep(1)  # Wait for 1 second
-    
-    return True
-
-
-# %%
-# GAME FUNCTIONS
+# HELPER FUNCTIONS
 
 def linebreak():
     """
@@ -305,25 +274,81 @@ def linebreak():
     """
     print("\n\n")
 
+def safe_input(prompt):
+    """
+    This function ensures that input prompts are displayed properly
+    without being overwritten by background thread prints.
+    """
+    try:
+        return input(f"\n{prompt}\n> ")
+    except EOFError:
+        return ""
+
+# %%
+# TIMER
+
+import time
+import threading
+import os  # Import os for forced exit on game end via timer threading.
+
+def start_timer(total_time):
+    """
+    Starts a countdown timer in a separate thread.
+    Prints remaining time every second without interfering with input.
+    """
+    def countdown():
+        start_time = time.time()
+        while True:
+            elapsed_time = time.time() - start_time
+            remaining_time = total_time - int(elapsed_time)
+            
+            if remaining_time <= 0:
+                linebreak()
+                print(f"\n{red_b}Time's up! You didn't escape in time! {cyan_b}iDavid{white} seems to {red_b}shut down...{white} \nYou are now alone in the room and all the portals have closed for good, {red_b}there is no way to leave.{white} \nYou are bound to study Data Science for the rest of your life.{white}")
+                
+                os._exit(0)  # Forcefully stop the entire program
+            
+            if (remaining_time % 30 == 0):
+                # Print timer on a separate line, avoiding overlap with input. Only happends every 15 seconds
+                print(f"\rSuddenly {cyan_b}iDavid{white} turns to you and reminds you that you only have: {red_b}{remaining_time} seconds{white} remaining.\n")
+                # sys.stdout.flush()
+
+            time.sleep(1)
+    
+    # Run the timer in a separate thread
+    timer_thread = threading.Thread(target=countdown, daemon=True)
+    timer_thread.start()
+
+
+# %%
+# GAME FUNCTIONS
+
 def start_game():
     """
     Start the game
     """
-    linebreak() # break lines for the game start
-    print( f"The classroom has been taken over by {cyan_b}iDavid{white}, who is a Teacher at {cyan_b}IRONHACK{white} with sinister intentions. He seems to have locked everyone inside and left cryptic clues all over the classroom. The lights blink, and strange whispers echo through the air. A clock on the wall ticks loudly, counting down to something threatening." )
+
     linebreak()
-    print(f"But there is hope. You are the only one among your classmates who holds the power to free them. To do this, you must embark on a journey through mysterious scenarios. In each scenario, you need will need to find several {magenta_b}pills{white}. These {magenta_b}pills{white} will not only open {cyan_b}portals{white} to your next challenges but will also bring you closer to {green_b}freeing all your classmates!{white}") 
+    
+    print( f"The classroom has been taken over by {cyan_b}iDavid{white}, a Robot Teacher at {cyan_b}IRONHACK{white} with sinister intentions. \nHe seems to have {red_b}locked everyone{white} inside and left cryptic clues all around. \nThe lights flicker, and strange whispers echo through the air." )
     linebreak()
-    user_input = input(f"{white_u}Will you accept the challenge?{white} type: {green_b}'yes{white}' or {red_b}'no'{white}: ")
+
+    print(f"But there is hope. You are the only one among your classmates who holds the power to free them. \nTo do this, you must embark on a journey through mysterious {magenta_b}scenarios{white}. \nIn each {magenta_b}scenario{white}, you need will need to find several {blue_b}pills{white}. \nThese {blue_b}pills{white} will help you open {cyan_b}portals{white} to your next challenges and bring you closer to {green_b}freeing all your classmates!{white}") 
+    linebreak()
+
+    print(f"You will have {red_b}{INITIAL_TIMER_VALUE} seconds{white} to make it to the end!\n")
+
+    user_input = safe_input(f"{white_u}Will you accept the challenge?{white} type: {green_b}'yes{white}' or {red_b}'no'{white}: ")
 
     if user_input.strip().lower() == "yes":
+        start_timer(INITIAL_TIMER_VALUE - 1) # -1 so it doesn't print at the start
         play_scenario(game_state["initial_scenario"])
     else:
-        #pygame.mixer.music.stop()
-        #pygame.mixer.quit()
-        print(f"That's too bad. {cyan_b}iDavid{white} seems to {red_b}shut down...{white} you are now alone in the room and all the portals have closed for good, {red_b}there is no way to leave.{white} You are bound to study Data Science for the rest of your life.{white}")
+        pygame.mixer.music.stop()
+        pygame.mixer.quit()
         linebreak()
-
+        print(f"That's too bad. {cyan_b}iDavid{white} seems to {red_b}shut down...{white} \nYou are now alone in the room and all the {magenta_b}portals{white} have closed for good, {red_b}there is no way to leave.{white} \nYou are bound to study Data Science alone for the rest of your life.{white}")
+        linebreak()
 
 # game termination
 def play_scenario(scenario):
@@ -340,8 +365,8 @@ def play_scenario(scenario):
         if(game_state["current_scenario"] == game_state["target_scenario"]):
             #* GAME END
             print(f"{green_b}Congrats!{white} You answered all the questions in each scenario and {green_b}freed all your classmates!{white}. You also noticed the robot gets an update to {cyan_b}iDavid 2.0{white}, a less sinister version who celebrates with everyone!")
-            #pygame.mixer.music.stop()
-            #pygame.mixer.quit()
+            pygame.mixer.music.stop()
+            pygame.mixer.quit()
             return # END THE GAME
         
         print(f"You find youself in a {blue_b}{scenario["name"]}{white}. {scenario["description"]}") # message if the user enters scenario first time
@@ -350,12 +375,12 @@ def play_scenario(scenario):
 
 
     #* GAME CONTINUES
-    intended_action = input(f"What would you like to do? Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}? ").strip().lower()
+    intended_action = safe_input(f"{white_u}What would you like to do?{white} Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}? ").strip().lower()
     if intended_action == "explore":
         explore_scenario(scenario)
         play_scenario(scenario)
     elif intended_action == "examine":
-        examine_item(input(f"What would you like to {yellow_b}'examine'{white} ? ").strip().lower())
+        examine_item(safe_input(f"What would you like to {yellow_b}'examine'{white} ? ").strip().lower())
     else:
         print(f"{red_b}Not sure what you mean{white}. Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}.")
         play_scenario(scenario)
@@ -413,7 +438,7 @@ def examine_item(item_name):
             elif(item["type"] == "furniture"):
                 if(item["name"] in object_relations and len(object_relations[item["name"]])>0): #if the item exist inside the object relations and if it has any relations
                     question_dict = object_relations[item["name"]][0] #It's getting the first key of the object_relations
-                    user_input = input(f"You find a terminal prompt with a question: {white_u}{question_dict['question']}{white} ").strip().lower()
+                    user_input = safe_input(f"You find a terminal prompt with a question: {white_u}{question_dict['question']}{white} ").strip().lower()
                     if(user_input == question_dict['answer']):
                         item_found = object_relations[item["name"]].pop() #It's removing the key from the object_relations
                         game_state["pills_collected"].append(item_found)
@@ -428,7 +453,7 @@ def examine_item(item_name):
     if(output is None):
         print(f"The item you requested is {red_b}not found{white} in the current scenario.")
     
-    if(next_scenario and input(f"Do you want to go to the next scenario? Enter {green_b}'yes'{white} or {red_b}'no'{white}: ").strip() == 'yes'):
+    if(next_scenario and safe_input(f"{white_u}Do you want to go to the next scenario?{white} Enter {green_b}'yes'{white} or {red_b}'no'{white}: ").strip() == 'yes'):
         play_scenario(next_scenario)
     else:
         play_scenario(current_scenario)
@@ -438,10 +463,6 @@ def examine_item(item_name):
 game_state = INIT_GAME_STATE.copy()
 
 start_game()
-
-# Start the check_user_input function in a separate thread
-# input_thread = threading.Thread(target=check_user_input, daemon=True)
-# input_thread.start()
         
 
 
