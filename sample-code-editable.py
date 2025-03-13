@@ -184,14 +184,15 @@ object_relations = {
 # way you can replay the game multiple times.
 
 INIT_GAME_STATE = {
-    "current_scenario": classroom,
-    "pills_collected": [],
+    "initial_scenario": classroom, # this allows the first game image to be shown when the current_scenario changes
+    "current_scenario": None, # this makes sense, the user doesn't start anywhere until a scenario is assigned
+    "pills_collected": [pill_blue, pill_red, pill_green, pill_yellow], #! IMPORTANT. THIS MAKES THE USER STARTS WITH ALL PILLS. CHANGE IN THE FINAL VERSION
     "target_scenario": outside,
 }
 
 # %%
 # MUSIC
-
+""" 
 #!installation music library
 #%pip install pygame #! Comment if runnin on terminal and .py file
 import pygame
@@ -203,7 +204,7 @@ pygame.mixer.music.load(r"quiz-countdown-194417.mp3")
 # set volume
 pygame.mixer.music.set_volume(0.008)
 # play music (-1 means loop indefinitely)
-pygame.mixer.music.play(-1) 
+pygame.mixer.music.play(-1) """
 
 # pygame.mixer.music.stop() #! uncomment and run to stop the music
 
@@ -345,10 +346,10 @@ def start_game():
     user_input = input(f"{text_in_color("white", "underline", "Will you accept the challenge?")} type: {text_in_color("green", "bold", "'yes'")} or {text_in_color("red", "bold", "'no'")} ")
 
     if user_input == "yes":
-        play_scenario(game_state["current_scenario"])
+        play_scenario(game_state["initial_scenario"])
     else:
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
+        #pygame.mixer.music.stop()
+        #pygame.mixer.quit()
         print(f"That's too bad. {text_in_color("cyan", "bold", "iDavid")} seems to {text_in_color("red", "bold", "shut down...")} you are now alone in the room and all the portals have closed for good, {text_in_color("red", "bold", "there is no way to leave")}. You are bound to study Data Science for the rest of your life.")
         linebreak()
 
@@ -361,11 +362,15 @@ def play_scenario(scenario):
     explore (list all items in this room) or examine an item found here.
     """
 
-    game_state["current_scenario"] = scenario
+    if game_state["current_scenario"] != scenario:
+        #* this prevents the image to be shown again unless the user enters a new scenario
+        game_state["current_scenario"] = scenario
+        show_image(f"./images/{game_state["current_scenario"]["name"]}.jpg")
+
     if(game_state["current_scenario"] == game_state["target_scenario"]):
-        print(f"{text_in_color("magenta", "bold", "Congrats!")} You answered all the questions in each scenario and {text_in_color("magenta", "bold", "freed all your classmates!")}")
-        pygame.mixer.music.stop()
-        pygame.mixer.quit()
+        print(f"{text_in_color("magenta", "bold", "Congrats!")} You answered all the questions in each scenario and {text_in_color("magenta", "bold", "freed all your classmates!")}. You also noticed the robot gets an update to {text_in_color("cyan", "bold", "iDavid 2.0")}, a less sinister version who celebrates with everyone!")
+        #pygame.mixer.music.stop()
+        #pygame.mixer.quit()
         return  
 
     else:
