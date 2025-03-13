@@ -211,54 +211,25 @@ pygame.mixer.music.play(-1) """
 # %%
 # FONT COLOR
 
-def text_in_color(color, style, text):
-    
-    # ANSI color codes (foreground)
-    colors = {
-        "black": 30,
-        "red": 31,
-        "green": 32,
-        "yellow": 33,
-        "blue": 34,
-        "magenta": 35,
-        "cyan": 36,
-        "white": 37,
-        "reset": 0,  # Reset color
-    }
+# removed function and added variables for simplicity
 
-    # ANSI style codes
-    styles = {
-        "regular": 0,  # Default (no styling)
-        "bold": 1,
-        "underline": 4,
-        "italic": 3,
-        "reverse": 7,
-        "blink": 5,
-    }
+red_b = "\033[1;31m" # RED BOLD. for incorrect prompts or actions
+green_b = "\033[1;32m" # GREEN BOLD. for correct prompts or success messages
+yellow_b = "\033[1;33m" # YELLOW BOLD. for possible actions the user can do
+blue_b = "\033[1;34m" # BLUE BOLD. for items (things the user collects)
+magenta_b = "\033[1;35m" # MAGENTA BOLD. for scenarios (things the user explores)
+cyan_b = "\033[1;36m" # CYAN BOLD. for furniture, portals and decorations (things the user examines)
 
-    # Get the color code
-    color_code = colors.get(color.lower(), 37)  # Default to white if invalid color
+white = "\033[0;37m" # WHITE. all other text. Also used for RESET
+white_u = "\033[1;4;37m" # WHITE BOLD UNDERLINE. for questions the user is prompted
 
-    # Get the style code
-    style_code = styles.get(style.lower(), 0)  # Default to regular if invalid style
+#? how to use?
 
-    # Return the combined ANSI code
-    if style == "background":
-      # only for background since syntax is different and color is +10
-      return f"\033[{color_code+10}m{text}\033[0m"
-    else:  
-      return f"\033[{style_code};{color_code}m{text}\033[0m"
+# single colored lines: start any colored print or input with the color to use in the whole message
+#example: print(green_b + "Hello World in green!")
 
-#? HOW TO USE?
-#* Invoke the function to get the string in color returned. Concatenate with another string or print directly.
-
-# example =>  print( "Hello " + text_color("red", "bold", "World!") )
-# ...or =>    print( f"Hello {text_color("red", "bold", "World!")}" )
-
-#* Colors and Font Styles available:
-
-# Colors: black, red, green, yellow, blue, magenta, cyan, white, reset
-# Styles: regular, bold, underline, italic, reverse, blink, background
+# multicolored lines: use string interpolation and add color variables before each colores word or subtext.
+#example: print(f"{white}This part is white {red_b}and this part is red. {white}This part is white again ")
 
 # %%
 # IMAGE PROCESSING
@@ -339,18 +310,18 @@ def start_game():
     Start the game
     """
     linebreak() # break lines for the game start
-    print( f"The classroom has been taken over by {text_in_color("cyan", "bold", "iDavid")}, who is a Teacher at {text_in_color("cyan", "bold", "IRONHACK")} with sinister intentions. He seems to have locked everyone inside and left cryptic clues all over the classroom. The lights blink, and strange whispers echo through the air. A clock on the wall ticks loudly, counting down to something threatening." )
+    print( f"The classroom has been taken over by {cyan_b}iDavid{white}, who is a Teacher at {cyan_b}IRONHACK{white} with sinister intentions. He seems to have locked everyone inside and left cryptic clues all over the classroom. The lights blink, and strange whispers echo through the air. A clock on the wall ticks loudly, counting down to something threatening." )
     linebreak()
-    print(f"But there is hope. You are the only one among your classmates who holds the power to free them. To do this, you must embark on a journey through mysterious scenarios. In each scenario, you need will need to find several {text_in_color("magenta", "bold", "pills")}. These {text_in_color("magenta", "bold", "pills")} will not only open {text_in_color("cyan", "bold", "portals")} to your next challenges but will also bring you closer to {text_in_color("green", "bold", "freeing all your classmates.")}") 
+    print(f"But there is hope. You are the only one among your classmates who holds the power to free them. To do this, you must embark on a journey through mysterious scenarios. In each scenario, you need will need to find several {magenta_b}pills{white}. These {magenta_b}pills{white} will not only open {cyan_b}portals{white} to your next challenges but will also bring you closer to {green_b}freeing all your classmates!{white}") 
     linebreak()
-    user_input = input(f"{text_in_color("white", "underline", "Will you accept the challenge?")} type: {text_in_color("green", "bold", "'yes'")} or {text_in_color("red", "bold", "'no'")} ")
+    user_input = input(f"{white_u}Will you accept the challenge?{white} type: {green_b}'yes{white}' or {red_b}'no'{white}: ")
 
-    if user_input == "yes":
+    if user_input.strip().lower() == "yes":
         play_scenario(game_state["initial_scenario"])
     else:
         #pygame.mixer.music.stop()
         #pygame.mixer.quit()
-        print(f"That's too bad. {text_in_color("cyan", "bold", "iDavid")} seems to {text_in_color("red", "bold", "shut down...")} you are now alone in the room and all the portals have closed for good, {text_in_color("red", "bold", "there is no way to leave")}. You are bound to study Data Science for the rest of your life.")
+        print(f"That's too bad. {cyan_b}iDavid{white} seems to {red_b}shut down...{white} you are now alone in the room and all the portals have closed for good, {red_b}there is no way to leave.{white} You are bound to study Data Science for the rest of your life.{white}")
         linebreak()
 
 
@@ -363,36 +334,40 @@ def play_scenario(scenario):
     """
 
     if game_state["current_scenario"] != scenario:
-        #* this prevents the image to be shown again unless the user enters a new scenario
+        #* SCENARIO CHANGE
         game_state["current_scenario"] = scenario
         show_image(f"./images/{game_state["current_scenario"]["name"]}.jpg")
-
-    if(game_state["current_scenario"] == game_state["target_scenario"]):
-        print(f"{text_in_color("magenta", "bold", "Congrats!")} You answered all the questions in each scenario and {text_in_color("magenta", "bold", "freed all your classmates!")}. You also noticed the robot gets an update to {text_in_color("cyan", "bold", "iDavid 2.0")}, a less sinister version who celebrates with everyone!")
-        #pygame.mixer.music.stop()
-        #pygame.mixer.quit()
-        return  
-
+        if(game_state["current_scenario"] == game_state["target_scenario"]):
+            #* GAME END
+            print(f"{green_b}Congrats!{white} You answered all the questions in each scenario and {green_b}freed all your classmates!{white}. You also noticed the robot gets an update to {cyan_b}iDavid 2.0{white}, a less sinister version who celebrates with everyone!")
+            #pygame.mixer.music.stop()
+            #pygame.mixer.quit()
+            return # END THE GAME
+        
+        print(f"You find youself in a {blue_b}{scenario["name"]}{white}. {scenario["description"]}") # message if the user enters scenario first time
     else:
-        print("You seem to be in a " + text_in_color("blue", "bold", scenario["name"]) + ". " + scenario["description"])
-        intended_action = input(f"What would you like to do? Type {text_in_color("yellow", "bold", "'explore'")} or {text_in_color("yellow", "bold", "'examine'")}? ").strip().lower()
-        if intended_action == "explore":
-            explore_scenario(scenario)
-            play_scenario(scenario)
-        elif intended_action == "examine":
-            examine_item(input(f"What would you like to {text_in_color("yellow", "bold", "'examine' ")}? ").strip().lower())
-        else:
-            print(f"{text_in_color("red", "bold", "Not sure what you mean")}. Type {text_in_color("yellow", "bold", "'explore'")} or {text_in_color("yellow", "bold", "'examine'")}.")
-            play_scenario(scenario)
-        linebreak()
+        print(f"You are still in the {blue_b}{scenario["name"]}{white}.") # message if the user is still in the same scenario as before
+
+
+    #* GAME CONTINUES
+    intended_action = input(f"What would you like to do? Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}? ").strip().lower()
+    if intended_action == "explore":
+        explore_scenario(scenario)
+        play_scenario(scenario)
+    elif intended_action == "examine":
+        examine_item(input(f"What would you like to {yellow_b}'examine'{white} ? ").strip().lower())
+    else:
+        print(f"{red_b}Not sure what you mean{white}. Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}.")
+        play_scenario(scenario)
+    linebreak()
 
 def explore_scenario(scenario):
     """
     Explore a room. List all items belonging to this room.
     """
-    explore_message = f"You decide to {text_in_color("yellow", "bold", "'explore'")} around and find the following: "
+    explore_message = f"You decide to {yellow_b}'explore'{white} around and find the following: "
     for item in object_relations[scenario["name"]]:
-      explore_message += text_in_color("magenta", "bold", str(item["name"])) + ", "
+      explore_message += magenta_b + str(item["name"]) + white + ", " # colors for the colored items and white for reset
     explore_message = explore_message[:-2]+"."
     print(explore_message)
 
@@ -424,7 +399,7 @@ def examine_item(item_name):
     
     for item in object_relations[current_scenario["name"]]:
         if(item["name"] == item_name):
-            output = "You examine " + text_in_color("magenta", "bold", item_name) + ". "
+            output = f"You examine {magenta_b}{item_name}{white}."
             if(item["type"] == "portal"):
                 have_key = False
                 for key in game_state["pills_collected"]:
@@ -438,22 +413,22 @@ def examine_item(item_name):
             elif(item["type"] == "furniture"):
                 if(item["name"] in object_relations and len(object_relations[item["name"]])>0): #if the item exist inside the object relations and if it has any relations
                     question_dict = object_relations[item["name"]][0] #It's getting the first key of the object_relations
-                    user_input = input(f"{text_in_color("white", "underline", question_dict['question'])} ").strip().lower()
+                    user_input = input(f"You find a terminal prompt with a question: {white_u}{question_dict['question']}{white} ").strip().lower()
                     if(user_input == question_dict['answer']):
                         item_found = object_relations[item["name"]].pop() #It's removing the key from the object_relations
                         game_state["pills_collected"].append(item_found)
-                        output += f"You answered the question {text_in_color("green", "bold", "correctly!")} take the " + text_in_color("magenta", "bold", item_found["name"]) + "."
+                        output = f"You answered the question {green_b}correctly!{white} take the {magenta_b}{item_found["name"]}{white}."
                     else: 
-                        output += f"You answered the question {text_in_color("red", "bold", "incorrectly!")} Try again."
+                        output = f"You answered the question {red_b}incorrectly!{white} Try again."
                 else:
-                    output += text_in_color("red", "bold", "There isn't anything interesting about it.")
+                    output += f"{red_b} There isn't anything interesting about it{white}."
             print(output)
             break
 
     if(output is None):
-        print(f"The item you requested is {text_in_color("red", "bold", "not found")} in the current scenario.")
+        print(f"The item you requested is {red_b}not found{white} in the current scenario.")
     
-    if(next_scenario and input(f"Do you want to go to the next scenario? Enter {text_in_color("green", "bold", "'yes'")} or {text_in_color("red", "bold", "'no'")} ").strip() == 'yes'):
+    if(next_scenario and input(f"Do you want to go to the next scenario? Enter {green_b}'yes'{white} or {red_b}'no'{white}: ").strip() == 'yes'):
         play_scenario(next_scenario)
     else:
         play_scenario(current_scenario)
