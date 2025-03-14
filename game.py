@@ -39,7 +39,7 @@ questions_dict = {
     },
 
     "question_3": {
-        "question": "Who from your class had the larger number of pets in life?",
+        "question": "Who from your class has had the larger number of pets in life?",
         "answer": "stefano",
         "type": "question"
     },
@@ -139,7 +139,7 @@ outside = {
 classroom = {
     "name": "classroom",
     "type": "scenario",
-    "description": f"You are greeted by {cyan_b}iDavid{white} who invites you to look around. \nIt seems like a normal teaching classroom, with an amazing view from the Sagrada Familia in Barcelona. \nYou are not sure you will find your way back home, \nbut maybe some of your classmates could help you get out of here.",
+    "description": f"You are greeted by {cyan_b}iDavid{white} who invites you to look around. \nIt seems like a normal teaching classroom, with an amazing view of the Sagrada Familia in Barcelona. \nYou are not sure you will find your way back home, \nbut maybe some of your classmates could help you get out of here.",
 }
 
 shoe_store = {
@@ -160,6 +160,17 @@ basketball_court = {
     "description": "\nThe court is huge, with loud music and full with food and drink stands. \nAll the players are really tall, taller than everyone in your class. Or maybe not everyone?",
 }
 
+# SECRET
+idavid = {
+    "name": "idavid", # lowercase to match input.lower()
+    "type": "secret",
+    "messages": {
+        "classroom": f"You spot {cyan_b}iDavid{white} at the whiteboard, lost in thought, mumbling about ‘overfitting in real life.’ \nHe suddenly writes: 'Too much studying, not enough living'… then erases it quickly, looking around suspiciously.",
+        "shoe store": f"You see {cyan_b}iDavid{white} analyzing the shoe inventory, \nscribbling in a notebook: 'If I apply k-means clustering… I can find the optimal sneaker for a Data Scientist!' \nHe then tries on a pair, nodding as if they improve his coding skills.",
+        "pet store": f"{cyan_b}iDavid{white} is sitting inside a dog pen, surrounded by puppies. \nHe’s holding a notepad, muttering, 'If I had enough data points, \nI could predict which puppy will fetch the ball first... But they keep eating my notes!",
+        "basketball court": f"You notice {cyan_b}iDavid{white} is watching a game intensely, whispering, \n'If I track every player's shooting percentage, I can predict the MVP…' \nHe then gets hit by a stray ball and mutters, 'Outlier detected.'",
+    }
+}
 
 #all_scenarios = [classroom, outside]
 #all_portals = [portal_a]
@@ -178,10 +189,10 @@ object_relations = {
     "fitting area": [questions_dict["question_2"], pill_red],
     "training pads container": [questions_dict["question_3"],pill_green],
     "hot dog stand": [questions_dict["question_1"],pill_yellow],
-    "classroom": [backpack, computer, portal_blue],
-    "shoe store": [portal_blue, portal_red, portal_green, fitting_area],
-    "pet store": [training_pads_container, grooming_supplies_stand, portal_red],
-    "basketball court": [hot_dog_stand, portal_yellow, portal_green],
+    "classroom": [backpack, computer, portal_blue, idavid],
+    "shoe store": [portal_blue, portal_red, portal_green, fitting_area, idavid],
+    "pet store": [training_pads_container, grooming_supplies_stand, portal_red, idavid],
+    "basketball court": [hot_dog_stand, portal_yellow, portal_green, idavid],
     "outside": [portal_yellow],
     "blue portal": [classroom, shoe_store],
     "red portal": [shoe_store, pet_store,shoe_store],
@@ -197,11 +208,11 @@ object_relations = {
 INIT_GAME_STATE = {
     "initial_scenario": classroom, # this allows the first game image to be shown when the current_scenario changes
     "current_scenario": None, # this makes sense, the user doesn't start anywhere until a scenario is assigned
-    "pills_collected": [pill_yellow, pill_blue, pill_green, pill_red],
+    "pills_collected": [],
     "target_scenario": outside,
 }
 
-INITIAL_TIMER_VALUE = 300 # so 5 minutes
+INITIAL_TIMER_VALUE = 420 # so 7 minutes
 
 # %%
 # MUSIC
@@ -213,7 +224,7 @@ import pygame
 pygame.init()
 pygame.mixer.init()
 # load background music
-pygame.mixer.music.load(r"quiz-countdown-194417.mp3")
+pygame.mixer.music.load(r"./audio/quiz-countdown-194417.mp3")
 # set volume
 pygame.mixer.music.set_volume(0.008)
 # play music (-1 means loop indefinitely)
@@ -298,9 +309,9 @@ def start_timer(total_time):
                 
                 os._exit(0)  # Forcefully stop the entire program
             
-            if (remaining_time % 30 == 0):
+            if (remaining_time % 60 == 0):
                 # Print timer on a separate line, avoiding overlap with input. Only happends every 15 seconds
-                print(f"\rSuddenly {cyan_b}iDavid{white} turns to you and reminds you that you only have: {red_b}{remaining_time} seconds{white} remaining.\n")
+                print(f"\rSuddenly {cyan_b}iDavid{white} turns to you and reminds you that you only have: {red_b}{int(remaining_time/60)} minutes{white} remaining.\n")
                 # sys.stdout.flush()
 
             time.sleep(1)
@@ -329,7 +340,7 @@ def start_game():
     print(f"But there is hope. You are the only one among your classmates who holds the power to free them. \nTo do this, you must embark on a journey through mysterious {magenta_b}scenarios{white}. \nIn each {magenta_b}scenario{white}, you need will need to find several {blue_b}pills{white}. \nThese {blue_b}pills{white} will help you open {cyan_b}portals{white} to your next challenges and bring you closer to {green_b}freeing all your classmates!{white}") 
     linebreak()
 
-    print(f"You will have {red_b}{INITIAL_TIMER_VALUE} seconds{white} to make it to the end!\n")
+    print(f"You will have {red_b}{int(INITIAL_TIMER_VALUE/60)} minutes{white} to make it to the end!\n")
 
     user_input = safe_input(f"{white_u}Will you accept the challenge?{white} type: {green_b}'yes{white}' or {red_b}'no'{white}: ")
 
@@ -358,7 +369,9 @@ def play_scenario(scenario):
         show_image(f"./images/{game_state["current_scenario"]["name"].replace(" ", "-")}.jpg") # replace is due to img names not having spaces.
         if(game_state["current_scenario"] == game_state["target_scenario"]):
             #* GAME END
-            print(f"{green_b}Congrats!{white} You answered all the questions in each scenario and {green_b}freed all your classmates!{white}. You also noticed the robot gets an update to {cyan_b}iDavid 2.0{white}, a less sinister version who celebrates with everyone!")
+            linebreak()
+            print(f"{green_b}Congrats!{white} You answered all the questions in each scenario and {green_b}freed all your classmates!{white}. \nYou also noticed the robot gets an update to {cyan_b}iDavid 2.0{white}, a less sinister version who celebrates with everyone!")
+            linebreak()
             pygame.mixer.music.stop()
             pygame.mixer.quit()
             return # END THE GAME
@@ -386,6 +399,9 @@ def explore_scenario(scenario):
     """
     explore_message = f"You decide to {yellow_b}'explore'{white} around and find the following: "
     for item in object_relations[scenario["name"]]:
+      # SECRET. Below conditional, so iDavid is not visible in explore
+      if item["type"] == "secret": 
+        continue
       explore_message += magenta_b + str(item["name"]) + white + ", " # colors for the colored items and white for reset
     explore_message = explore_message[:-2]+"."
     print(explore_message)
@@ -442,12 +458,16 @@ def examine_item(item_name):
                         output = f"You answered the question {red_b}incorrectly!{white} Try again."
                 else:
                     output += f"{red_b} There isn't anything interesting about it{white}."
+            # SECRET. check for idavid special item and print the special iDavid message for each scenario
+            elif(item["type"] == "secret" and item["name"] == "idavid"):
+                output = item["messages"][current_scenario["name"]]
             print(output)
             break
 
     if(output is None):
         print(f"The item you requested is {red_b}not found{white} in the current scenario.")
     
+    linebreak()
     if(next_scenario and safe_input(f"{white_u}Do you want to go to the next scenario?{white} Enter {green_b}'yes'{white} or {red_b}'no'{white}: ").strip() == 'yes'):
         play_scenario(next_scenario)
     else:
