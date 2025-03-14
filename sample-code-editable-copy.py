@@ -1,29 +1,7 @@
 # %%
 # GLOBAL VARIABLES
 
-# FONT COLORS
-
-# NOTE: replaced function for variables for simplicity of use and to mantain code legibility
-
-red_b = "\033[1;31m" # RED BOLD. for incorrect prompts or actions
-green_b = "\033[1;32m" # GREEN BOLD. for correct prompts or success messages
-yellow_b = "\033[1;33m" # YELLOW BOLD. for possible actions the user can do
-blue_b = "\033[1;34m" # BLUE BOLD. for items (things the user collects)
-magenta_b = "\033[1;35m" # MAGENTA BOLD. for scenarios (things the user explores)
-cyan_b = "\033[1;36m" # CYAN BOLD. for furniture, portals and decorations (things the user examines)
-
-white = "\033[0;37m" # WHITE. all other text. Also used for RESET
-white_u = "\033[1;4;37m" # WHITE BOLD UNDERLINE. for questions the user is prompted
-
-#? how to use?
-
-# single colored lines: start any colored print or input with the color to use in the whole message
-#example: print(green_b + "Hello World in green!")
-
-# multicolored lines: use string interpolation and add color variables before each colores word or subtext.
-#example: print(f"{white}This part is white {red_b}and this part is red. {white}This part is white again ")
-
-# QUESTIONS
+# define rooms and items
 
 questions_dict = {
     "question_1": {
@@ -131,45 +109,57 @@ pill_yellow = {
 }
 
 # SCENARIOS
+#TODO ADD DESCRIPTION TO THE SCENARIOS
 outside = {
     "name": "outside",
-    "description": " ", # no description will be printed. But it needs the property to exist to prevent crash.
+    "description": " ",
 }
 
 classroom = {
     "name": "classroom",
     "type": "scenario",
-    "description": f"You are greeted by {cyan_b}iDavid{white} who invites you to look around. \nIt seems like a normal teaching classroom, with an amazing view from the Sagrada Familia in Barcelona. \nYou are not sure you will find your way back home, \nbut maybe some of your classmates could help you get out of here.",
+    "description": " ",
 }
 
 shoe_store = {
     "name":"shoe store",
     "type":"scenario",
-    "description": "\nSo many shoes around, it looks like a normal store where any of your classmates could buy one pair for themselves. \nYou start wondering if you would you be capable of choosing the perfect size for all of them",
+    "description": " ",
 }
 
 pet_store = {
     "name":"pet store",
     "type":"scenario",
-    "description": "\nThe store is filled with all kinds of pet items and you see several animals walking around. \nEverywhere you look, there’s something moving, chirping or wagging its tail. \nSome of your classmates would feel right at home among so many pets, while others might be a bit unsure.",
+    "description": " ",
 }
 
 basketball_court = {
     "name":"basketball court",
     "type":"scenario",
-    "description": "\nThe court is huge, with loud music and full with food and drink stands. \nAll the players are really tall, taller than everyone in your class. Or maybe not everyone?",
+    "description": " ",
 }
 
+# SECRET
+i_david = {
+    "name": "idavid", # lowercase to match input.lower()
+    "type": "secret",
+    "messages": {
+        "classroom": "You spot iDavid at the whiteboard, lost in thought, mumbling about ‘overfitting in real life.’ He suddenly writes: 'Too much studying, not enough living'… then erases it quickly, looking around suspiciously.",
+        "shoe store": "You see iDavid analyzing the shoe inventory, scribbling in a notebook: 'If I apply k-means clustering… I can find the optimal sneaker for a Data Scientist!' He then tries on a pair, nodding as if they improve his coding skills.v",
+        "pet store": "iDavid is sitting inside a dog pen, surrounded by puppies. He’s holding a notepad, muttering, 'If I had enough data points, I could predict which puppy will fetch the ball first... But they keep eating my notes!",
+        "basketball court": "You notice iDavid is watching a game intensely, whispering, 'If I track every player's shooting percentage, I can predict the MVP…' He gets hit by a stray ball and mutters, 'Outlier detected.'",
+    }
+} #todo add messages
 
+#* below commented from MVP as it was not used
 #all_scenarios = [classroom, outside]
 #all_portals = [portal_a]
-#! commented from MVP as it was not used
 
-# define which items/scenario are related
+# define which items/rooms are related
 
-# if its a scenario, everything inside the scenario
+# if its a room, everything inside the room
 # if its a furniture, everything inside the furniture
-# if it is a door, the two scenarios the door connects. From where to where!
+# if it is a door, the two rooms the door connects. From where to where!
 
 # CODE FOR RANDOM QUESTIONS -> [ questions_dict[random.choice(list(questions_dict.keys()))]
 
@@ -178,10 +168,10 @@ object_relations = {
     "fitting area": [questions_dict["question_2"], pill_red],
     "training pads container": [questions_dict["question_3"],pill_green],
     "hot dog stand": [questions_dict["question_1"],pill_yellow],
-    "classroom": [backpack, computer, portal_blue],
-    "shoe store": [portal_blue, portal_red, portal_green, fitting_area],
-    "pet store": [training_pads_container, grooming_supplies_stand, portal_red],
-    "basketball court": [hot_dog_stand, portal_yellow, portal_green],
+    "classroom": [backpack, computer, portal_blue, i_david],
+    "shoe store": [portal_blue, portal_red, portal_green, fitting_area, i_david],
+    "pet store": [training_pads_container, grooming_supplies_stand, portal_red, i_david],
+    "basketball court": [hot_dog_stand, portal_yellow, portal_green, i_david],
     "outside": [portal_yellow],
     "blue portal": [classroom, shoe_store],
     "red portal": [shoe_store, pet_store,shoe_store],
@@ -197,7 +187,7 @@ object_relations = {
 INIT_GAME_STATE = {
     "initial_scenario": classroom, # this allows the first game image to be shown when the current_scenario changes
     "current_scenario": None, # this makes sense, the user doesn't start anywhere until a scenario is assigned
-    "pills_collected": [pill_yellow, pill_blue, pill_green, pill_red],
+    "pills_collected": [],
     "target_scenario": outside,
 }
 
@@ -222,37 +212,68 @@ pygame.mixer.music.play(-1)
 
 
 # %%
+# FONT COLOR
+
+# NOTE: replaced function for variables for simplicity of use and to mantain code legibility
+
+red_b = "\033[1;31m" # RED BOLD. for incorrect prompts or actions
+green_b = "\033[1;32m" # GREEN BOLD. for correct prompts or success messages
+yellow_b = "\033[1;33m" # YELLOW BOLD. for possible actions the user can do
+blue_b = "\033[1;34m" # BLUE BOLD. for items (things the user collects)
+magenta_b = "\033[1;35m" # MAGENTA BOLD. for scenarios (things the user explores)
+cyan_b = "\033[1;36m" # CYAN BOLD. for furniture, portals and decorations (things the user examines)
+
+white = "\033[0;37m" # WHITE. all other text. Also used for RESET
+white_u = "\033[1;4;37m" # WHITE BOLD UNDERLINE. for questions the user is prompted
+
+#? how to use?
+
+# single colored lines: start any colored print or input with the color to use in the whole message
+#example: print(green_b + "Hello World in green!")
+
+# multicolored lines: use string interpolation and add color variables before each colores word or subtext.
+#example: print(f"{white}This part is white {red_b}and this part is red. {white}This part is white again ")
+
+# %%
 # IMAGE PROCESSING
 
-import platform  # For determining user OS
-import subprocess  # To run extra terminal commands
-import shutil  # For checking available terminal utilities
+import platform # for determining userOS
+import subprocess # to run extra terminal commands
+import shutil  # for checking if imgcat is available
 
 def show_image(img_path):
     """
-    Displays an image in the terminal (iTerm2 for Mac) or opens it in an external viewer (other terminals and OS)
-    Works only in standalone Python scripts (not VS Code's nested terminal).
+    Starts displays an image either in the terminal or by opening an image preview
+    example use: show_image("test.jpg")
+    IMPORTANT: Only works on terminals (not VS code nested terminal) and by running the .py file
+    in iTerm2 (for mac) it shows the image inside the terminal, in others, it opens an image preview.
     """
-    os_name = platform.system()  # Get the user OS
+    os_name = platform.system() # get the user OS
+
+    if os_name == "Darwin":  # if OS is macOS
+        
+        if shutil.which("imgcat"): # check if iTerm2's imgcat is available (this allows img to be displayed on terminal, but only on iTerm2)
+            try:
+                subprocess.run(["imgcat", img_path])  # use imgcat if iTerm2 is installed so img is displayed directly on terminal
+            except Exception as e:
+                print(f"Error displaying image with imgcat: {e}")
+        else:
+            try:
+                subprocess.run(["open", img_path])  # fallback to Preview if imgcat is not found. this will open img on default image preview app.
+            except Exception as e:
+                print(f"Error opening image with Preview: {e}") # error handling
     
-    try:
-        if os_name == "Darwin":  # macOS
-            if shutil.which("imgcat"):  # Check if iTerm2's imgcat is available
-                subprocess.run(["imgcat", img_path])  # Show image in iTerm2 terminal
-            else:
-                subprocess.run(["open", img_path])  # Open image in macOS Preview app
-
-        elif os_name == "Windows":  # Windows
-            if shutil.which("powershell"):  # Use PowerShell if available
-                subprocess.run(["powershell", "-c", f"Start-Process '{img_path}'"], shell=True)
-            else:  # Fallback to explorer (works better for Git Bash)
-                subprocess.run(["explorer", img_path], shell=True)
-
-        elif os_name == "Linux":  # Linux
-            subprocess.run(["xdg-open", img_path])  # Open in default image viewer
-
-    except Exception as e:
-        print(f"Error displaying image: {e}")  # Generic error handling
+    elif os_name == "Windows":  # if OS is Windows
+        try:
+            subprocess.run(["start", img_path], shell=True)  # open in default image viewer
+        except Exception as e:
+            print(f"Error opening image: {e}") # error handling
+    
+    elif os_name == "Linux":  # if OS is Linux
+        try:
+            subprocess.run(["xdg-open", img_path])  # open in default image viewer
+        except Exception as e:
+            print(f"Error opening image: {e}") # error handling
 
 
 # %%
@@ -293,7 +314,7 @@ def start_timer(total_time):
             remaining_time = total_time - int(elapsed_time)
             
             if remaining_time <= 0:
-                # linebreak()
+                linebreak()
                 print(f"\n{red_b}Time's up! You didn't escape in time! {cyan_b}iDavid{white} seems to {red_b}shut down...{white} \nYou are now alone in the room and all the portals have closed for good, {red_b}there is no way to leave.{white} \nYou are bound to study Data Science for the rest of your life.{white}")
                 
                 os._exit(0)  # Forcefully stop the entire program
@@ -319,9 +340,6 @@ def start_game():
     """
 
     linebreak()
-    linebreak()
-    linebreak()
-    linebreak()
     
     print( f"The classroom has been taken over by {cyan_b}iDavid{white}, a Robot Teacher at {cyan_b}IRONHACK{white} with sinister intentions. \nHe seems to have {red_b}locked everyone{white} inside and left cryptic clues all around. \nThe lights flicker, and strange whispers echo through the air." )
     linebreak()
@@ -343,19 +361,18 @@ def start_game():
         print(f"That's too bad. {cyan_b}iDavid{white} seems to {red_b}shut down...{white} \nYou are now alone in the room and all the {magenta_b}portals{white} have closed for good, {red_b}there is no way to leave.{white} \nYou are bound to study Data Science alone for the rest of your life.{white}")
         linebreak()
 
-
 # game termination
 def play_scenario(scenario):
     """
-    Play a scenario. First check if the scenario being played is the target scenario.
+    Play a room. First check if the room being played is the target room.
     If it is, the game will end with success. Otherwise, let player either 
-    explore (list all items in this scenario) or examine an item found here.
+    explore (list all items in this room) or examine an item found here.
     """
 
     if game_state["current_scenario"] != scenario:
         #* SCENARIO CHANGE
         game_state["current_scenario"] = scenario
-        show_image(f"./images/{game_state["current_scenario"]["name"].replace(" ", "-")}.jpg") # replace is due to img names not having spaces.
+        show_image(f"./images/{game_state["current_scenario"]["name"]}.jpg")
         if(game_state["current_scenario"] == game_state["target_scenario"]):
             #* GAME END
             print(f"{green_b}Congrats!{white} You answered all the questions in each scenario and {green_b}freed all your classmates!{white}. You also noticed the robot gets an update to {cyan_b}iDavid 2.0{white}, a less sinister version who celebrates with everyone!")
@@ -378,22 +395,24 @@ def play_scenario(scenario):
     else:
         print(f"{red_b}Not sure what you mean{white}. Type {yellow_b}'explore'{white} or {yellow_b}'examine'{white}.")
         play_scenario(scenario)
-    # linebreak()
+    linebreak()
 
 def explore_scenario(scenario):
     """
-    Explore a scenario. List all items belonging to this scenario.
+    Explore a room. List all items belonging to this room.
     """
     explore_message = f"You decide to {yellow_b}'explore'{white} around and find the following: "
     for item in object_relations[scenario["name"]]:
+      # SECRET. Below conditional, so iDavid is not visible in explore
+      if item["type"] == "secret": 
+        continue
       explore_message += magenta_b + str(item["name"]) + white + ", " # colors for the colored items and white for reset
     explore_message = explore_message[:-2]+"."
     print(explore_message)
 
 def get_next_scenario_of_portal(portal, current_scenario):
     """
-    From object_relations, find the two scenarios connected to the given portal.
-    If current_scenario is the first scenario, return the second scenario, and viceversa.
+    #!From object_relations, find the two rooms connected to the given door. Return the second room. But if the second room is the current room, return the first element.
     """
     connected_scenarios = object_relations[portal["name"]]
     
@@ -405,12 +424,12 @@ def get_next_scenario_of_portal(portal, current_scenario):
 def examine_item(item_name):
     """
     Examine an item which can be a door or furniture.
-    First make sure the intended item belongs to the current scenario.
-    Then check if the item is a door. Tell player if pill hasn't been 
+    First make sure the intended item belongs to the current room.
+    Then check if the item is a door. Tell player if key hasn't been 
     collected yet. Otherwise ask player if they want to go to the next
-    scenario. If the item is not a door, then check if it contains pills.
-    Collect the pill if found and update the game state. At the end,
-    play either the current or the next scenario depending on the game state
+    room. If the item is not a door, then check if it contains keys.
+    Collect the key if found and update the game state. At the end,
+    play either the current or the next room depending on the game state
     to keep playing.
     """
     current_scenario = game_state["current_scenario"]
@@ -432,16 +451,19 @@ def examine_item(item_name):
                     output += "It is blocked, you will need to find the pill first"
             elif(item["type"] == "furniture"):
                 if(item["name"] in object_relations and len(object_relations[item["name"]])>0): #if the item exist inside the object relations and if it has any relations
-                    question_dict = object_relations[item["name"]][0] #It's getting the first pill of the object_relations
+                    question_dict = object_relations[item["name"]][0] #It's getting the first key of the object_relations
                     user_input = safe_input(f"You find a terminal prompt with a question: {white_u}{question_dict['question']}{white} ").strip().lower()
                     if(user_input == question_dict['answer']):
-                        item_found = object_relations[item["name"]].pop() #It's removing the pill from the object_relations
+                        item_found = object_relations[item["name"]].pop() #It's removing the key from the object_relations
                         game_state["pills_collected"].append(item_found)
                         output = f"You answered the question {green_b}correctly!{white} take the {magenta_b}{item_found["name"]}{white}."
                     else: 
                         output = f"You answered the question {red_b}incorrectly!{white} Try again."
                 else:
                     output += f"{red_b} There isn't anything interesting about it{white}."
+            # SECRET. check for idavid special item and print the special iDavid message for each scenario
+            elif(item["type"] == "secret" and item["name"] == "idavid"):
+                output = item["messages"][current_scenario["name"]]
             print(output)
             break
 
